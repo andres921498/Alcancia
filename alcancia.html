@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alcancía Digital - IA</title>
+    <!-- Fuente moderna -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #0f2041; /* Azul oscuro corporativo */
+            --secondary-color: #d4af37; /* Dorado/Amarillo IA */
+            --bg-color: #f4f7f9;
+            --card-bg: #ffffff;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --danger: #e53e3e;
+            --success: #38a169;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Encabezado Principal */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: #a0aec0;
+            font-size: 1.1rem;
+        }
+
+        .coin-logo {
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            border: 3px solid #f6e05e;
+        }
+
+        /* Contenedor Principal (Grid) */
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+
+        /* Panel del Formulario */
+        .form-panel {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .form-panel h3 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background-color: #f8fafc;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(15, 32, 65, 0.1);
+        }
+
+        button.btn-submit {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button.btn-submit:hover {
+            background-color: #1a365d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15, 32, 65, 0.2);
+        }
+
+        /* Panel de Ideas */
+        .ideas-panel h3 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .ideas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .idea-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--secondary-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .idea-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .idea-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .idea-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-right: 10px;
+        }
+
+        .idea-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: #edf2f7;
+            padding: 3px 8px;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+
+        .idea-content {
+            flex-grow: 1;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            white-space: pre-wrap;
+        }
+
+        .btn-delete {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            align-self: flex-end;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-delete:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            background: var(--card-bg);
+            border-radius: 12px;
+            color: var(--text-muted);
+            border: 2px dashed #cbd5e0;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #cbd5e0;
+            margin-bottom: 1rem;
+        }
+
+        /* Notificaciones (Toast) */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: white;
+            border-left: 5px solid var(--success);
+            padding: 15px 20px;
+            margin-top: 10px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        .toast.error { border-left-color: var(--danger); }
+
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            .form-panel {
+                position: relative;
+                top: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="coin-logo">IA</div>
+        <h1>Alcancía Digital</h1>
+        <p>La llenamos con nuestras ideas, conceptos y esquemas</p>
+    </header>
+
+    <div class="main-container">
+        
+        <!-- Panel Izquierdo: Formulario -->
+        <div class="form-panel">
+            <h3><i class="fas fa-piggy-bank"></i> Deposita una idea</h3>
+            <form id="formularioIdeas">
+                <div class="form-group">
+                    <label for="nombreIdea">Idea: nombre de la idea <span style="color:red">*</span></label>
+                    <input type="text" id="nombreIdea" placeholder="Ej. Algoritmo A* (Búsqueda Informada)" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="objetivoIdea">Objetivo / Descripción <span style="color:red">*</span></label>
+                    <textarea id="objetivoIdea" rows="4" placeholder="Describe el concepto, su función y cómo se aplica..." required></textarea>
+                </div>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-coins"></i> Guardar en Alcancía
+                </button>
+            </form>
+        </div>
+
+        <!-- Panel Derecho: Lista de Ideas -->
+        <div class="ideas-panel">
+            <h3><i class="fas fa-lightbulb" style="color: var(--secondary-color);"></i> Documentación Recopilada</h3>
+            <div id="contenedorIdeas" class="ideas-grid">
+                <!-- Las ideas se inyectan aquí con JS -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Contenedor para notificaciones -->
+    <div id="toast-container"></div>
+
+    <script>
+        const formulario = document.getElementById('formularioIdeas');
+        const contenedorIdeas = document.getElementById('contenedorIdeas');
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', cargarIdeas);
+
+        // Evento Submit
+        formulario.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const nombre = document.getElementById('nombreIdea').value.trim();
+            const objetivo = document.getElementById('objetivoIdea').value.trim();
+            
+            // Obtener fecha y hora actual
+            const fechaActual = new Date();
+            const opcionesFecha = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+            const fechaFormateada = fechaActual.toLocaleDateString('es-ES', opcionesFecha);
+
+            const nuevaIdea = {
+                id: Date.now(),
+                nombre: nombre,
+                objetivo: objetivo,
+                fecha: fechaFormateada
+            };
+
+            const ideas = obtenerIdeas();
+            // Agregar al inicio del array para que salga primero
+            ideas.unshift(nuevaIdea); 
+            
+            localStorage.setItem('alcancia_ia', JSON.stringify(ideas));
+            
+            formulario.reset();
+            cargarIdeas();
+            mostrarNotificacion('¡Idea depositada con éxito!', 'success');
+        });
+
+        // Obtener de localStorage
+        function obtenerIdeas() {
+            const ideasGuardadas = localStorage.getItem('alcancia_ia');
+            return ideasGuardadas ? JSON.parse(ideasGuardadas) : [];
+        }
+
+        // Renderizar el HTML
+        function cargarIdeas() {
+            const ideas = obtenerIdeas();
+            contenedorIdeas.innerHTML = ''; 
+            
+            if(ideas.length === 0) {
+                contenedorIdeas.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-box-open"></i>
+                        <h4>Tu alcancía está vacía</h4>
+                        <p>Aún no hay conceptos de IA guardados. ¡Deposita el primero!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            ideas.forEach(idea => {
+                const tarjeta = document.createElement('div');
+                tarjeta.className = 'idea-card';
+                tarjeta.innerHTML = `
+                    <div class="idea-header">
+                        <h4 class="idea-title">${idea.nombre}</h4>
+                        <span class="idea-date"><i class="far fa-clock"></i> ${idea.fecha}</span>
+                    </div>
+                    <div class="idea-content">${idea.objetivo}</div>
+                    <button class="btn-delete" onclick="eliminarIdea(${idea.id})">
+                        <i class="fas fa-trash-alt"></i> Eliminar
+                    </button>
+                `;
+                contenedorIdeas.appendChild(tarjeta);
+            });
+        }
+
+        // Eliminar idea
+        function eliminarIdea(id) {
+            // Confirmación nativa moderna
+            if(confirm('¿Estás seguro de eliminar este concepto de tu documentación?')) {
+                let ideas = obtenerIdeas();
+                ideas = ideas.filter(idea => idea.id !== id);
+                localStorage.setItem('alcancia_ia', JSON.stringify(ideas));
+                cargarIdeas();
+                mostrarNotificacion('Idea eliminada de la alcancía.', 'error');
+            }
+        }
+
+        // Sistema de notificaciones (Toasts)
+        function mostrarNotificacion(mensaje, tipo) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${tipo}`;
+            
+            const icono = tipo === 'success' ? '<i class="fas fa-check-circle" style="color: var(--success)"></i>' 
+                                             : '<i class="fas fa-info-circle" style="color: var(--danger)"></i>';
+            
+            toast.innerHTML = `${icono} <span>${mensaje}</span>`;
+            
+            container.appendChild(toast);
+
+            // Eliminar el toast después de 3 segundos
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
