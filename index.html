@@ -478,11 +478,6 @@
                     <label for="objetivoIdea">Objetivo / Descripción <span style="color:red">*</span></label>
                     <textarea id="objetivoIdea" rows="4" placeholder="Describe el concepto, su función y cómo se aplica..." required></textarea>
                 </div>
-                <!-- Campo temporal de fecha manual -->
-                <div class="form-group">
-                    <label for="fechaIdea">Fecha del comentario (temporal)</label>
-                    <input type="datetime-local" id="fechaIdea">
-                </div>
                 <button type="submit" class="btn-submit" id="btnGuardar">
                     <i class="fas fa-coins"></i> Guardar en Alcancía
                 </button>
@@ -603,18 +598,17 @@
 
         let todasLasIdeas = [];
 
-        // 1. GUARDAR IDEA EN CLOUD FIRESTORE
+        // 1. GUARDAR IDEA EN CLOUD FIRESTORE CON LA FECHA ACTUAL DEL MOMENTO
         formulario.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const autor = document.getElementById('autorIdea').value.trim();
             const nombre = document.getElementById('nombreIdea').value.trim();
             const objetivo = document.getElementById('objetivoIdea').value.trim();
-            const valorFechaManual = document.getElementById('fechaIdea').value;
 
-            const fechaSeleccionada = valorFechaManual ? new Date(valorFechaManual) : new Date();
+            const fechaActual = new Date();
             const opcionesFecha = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-            const fechaFormateada = fechaSeleccionada.toLocaleDateString('es-ES', opcionesFecha);
+            const fechaFormateada = fechaActual.toLocaleDateString('es-ES', opcionesFecha);
 
             btnGuardar.disabled = true;
             btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
@@ -631,7 +625,6 @@
                 // Mantener el nombre del autor escrito para no tener que escribirlo cada vez
                 document.getElementById('nombreIdea').value = '';
                 document.getElementById('objetivoIdea').value = '';
-                document.getElementById('fechaIdea').value = '';
 
                 mostrarNotificacion('¡Idea depositada en la nube con éxito!', 'success');
             } catch (error) {
@@ -703,7 +696,7 @@
             }
         }
 
-        // Normaliza cualquier fecha guardada (texto en español, ISO, DD/MM/YYYY o Timestamp) a YYYY-MM-DD local
+        // Normaliza cualquier fecha guardada a YYYY-MM-DD local
         function extraerFechaYYYYMMDD(idea) {
             if (idea.fecha) {
                 const texto = String(idea.fecha)
@@ -730,7 +723,6 @@
                     dic: '12', diciembre: '12', dec: '12'
                 };
 
-                // Formato "13 nov 2026 23:50" o "13 de noviembre de 2026"
                 const matchTexto = texto.match(/(\d{1,2})\s+(?:de\s+)?([a-z]+)\s+(?:de\s+)?(\d{4})/);
                 if (matchTexto) {
                     const dia = String(matchTexto[1]).padStart(2, '0');
@@ -739,13 +731,11 @@
                     if (mes) return `${anio}-${mes}-${dia}`;
                 }
 
-                // Formato ISO "2026-11-13..."
                 const matchISO = texto.match(/(\d{4})-(\d{2})-(\d{2})/);
                 if (matchISO) {
                     return `${matchISO[1]}-${matchISO[2]}-${matchISO[3]}`;
                 }
 
-                // Formato numérico "13/11/2026" o "13-11-2026"
                 const matchNum = texto.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
                 if (matchNum) {
                     const dia = String(matchNum[1]).padStart(2, '0');
@@ -755,7 +745,6 @@
                 }
             }
 
-            // Respaldo con creadoEn si el documento no tiene fecha o no pudo parsearse
             if (idea.creadoEn && typeof idea.creadoEn.toDate === 'function') {
                 const d = idea.creadoEn.toDate();
                 const y = d.getFullYear();
@@ -791,7 +780,7 @@
         function renderizarIdeas() {
             const autorSeleccionado = filtroAutor.value;
             const temaSeleccionado = filtroTema.value;
-            const fechaSeleccionada = filtroFecha.value; // YYYY-MM-DD
+            const fechaSeleccionada = filtroFecha.value;
 
             contenedorIdeas.innerHTML = '';
 
