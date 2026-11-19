@@ -118,6 +118,7 @@
             font-size: 0.95rem;
             transition: all 0.3s ease;
             background-color: #f8fafc;
+            color: var(--text-main);
         }
 
         input:focus, textarea:focus, select:focus {
@@ -156,14 +157,14 @@
             transform: none;
         }
 
-        /* Cabecera del panel de ideas + Filtro */
+        /* Cabecera del panel de ideas */
         .ideas-header-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 1rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .ideas-header-bar h3 {
@@ -172,28 +173,118 @@
             margin: 0;
         }
 
-        .filter-box {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--card-bg);
-            padding: 6px 12px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        /* Resumen superior */
+        .summary-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.25rem;
         }
 
-        .filter-box label {
-            margin: 0;
-            font-size: 0.85rem;
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 0.9rem 1.1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .summary-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            background: rgba(15, 32, 65, 0.08);
+            color: var(--primary-color);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .summary-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .summary-number {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            line-height: 1.15;
+        }
+
+        .summary-label {
+            font-size: 0.78rem;
             color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Barra de filtros unificada con el sistema */
+        .filters-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr) auto;
+            gap: 0.85rem;
+            align-items: end;
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-item label {
+            margin: 0;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-item label i {
+            color: var(--secondary-color);
+        }
+
+        .filter-item select,
+        .filter-item input[type="date"] {
+            padding: 8px 11px;
+            font-size: 0.88rem;
+            height: 40px;
+            cursor: pointer;
+        }
+
+        .btn-reset-filters {
+            height: 40px;
+            padding: 0 14px;
+            border-radius: 8px;
+            border: 1px solid var(--primary-color);
+            background-color: var(--primary-color);
+            color: #ffffff;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.25s ease;
             white-space: nowrap;
         }
 
-        .filter-box select {
-            padding: 6px 10px;
-            font-size: 0.9rem;
-            min-width: 160px;
-            cursor: pointer;
+        .btn-reset-filters:hover {
+            background-color: #1a365d;
         }
 
         .ideas-grid {
@@ -333,6 +424,15 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
+        @media (max-width: 900px) {
+            .filters-bar {
+                grid-template-columns: 1fr 1fr;
+            }
+            .btn-reset-filters {
+                grid-column: 1 / -1;
+            }
+        }
+
         @media (max-width: 768px) {
             .main-container {
                 grid-template-columns: 1fr;
@@ -340,6 +440,12 @@
             .form-panel {
                 position: relative;
                 top: 0;
+            }
+            .summary-bar {
+                grid-template-columns: 1fr;
+            }
+            .filters-bar {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -386,12 +492,60 @@
         <div class="ideas-panel">
             <div class="ideas-header-bar">
                 <h3><i class="fas fa-lightbulb" style="color: var(--secondary-color);"></i> Documentación Recopilada</h3>
-                <div class="filter-box">
-                    <label for="filtroAutor"><i class="fas fa-filter"></i> Filtrar por:</label>
+            </div>
+
+            <!-- Resumen superior -->
+            <div class="summary-bar" id="resumenSuperior">
+                <div class="summary-card">
+                    <div class="summary-icon"><i class="fas fa-comments"></i></div>
+                    <div class="summary-info">
+                        <span class="summary-number" id="totalOpiniones">0</span>
+                        <span class="summary-label">Opiniones / Ideas</span>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon"><i class="fas fa-users"></i></div>
+                    <div class="summary-info">
+                        <span class="summary-number" id="totalUsuarios">0</span>
+                        <span class="summary-label">Integrantes activos</span>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-icon"><i class="fas fa-layer-group"></i></div>
+                    <div class="summary-info">
+                        <span class="summary-number" id="totalMostrados">0</span>
+                        <span class="summary-label">Mostrados ahora</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros unificados por integrante, tema y fecha -->
+            <div class="filters-bar">
+                <div class="filter-item">
+                    <label for="filtroAutor"><i class="fas fa-user"></i> Integrante</label>
                     <select id="filtroAutor">
                         <option value="TODOS">Todos los integrantes</option>
                     </select>
                 </div>
+
+                <div class="filter-item">
+                    <label for="filtroTema"><i class="fas fa-book-open"></i> Tema</label>
+                    <select id="filtroTema">
+                        <option value="TODOS">Todos los temas</option>
+                        <option value="Tema Nro. 1">Tema Nro. 1</option>
+                        <option value="Tema Nro. 2">Tema Nro. 2</option>
+                        <option value="Tema Nro. 3">Tema Nro. 3</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label for="filtroFecha"><i class="fas fa-calendar-alt"></i> Fecha</label>
+                    <input type="date" id="filtroFecha">
+                </div>
+
+                <button type="button" class="btn-reset-filters" id="btnLimpiarFiltros" title="Limpiar filtros">
+                    <i class="fas fa-rotate-left"></i> Limpiar
+                </button>
             </div>
 
             <div id="contenedorIdeas" class="ideas-grid">
@@ -438,7 +592,14 @@
         const contenedorIdeas = document.getElementById('contenedorIdeas');
         const btnGuardar = document.getElementById('btnGuardar');
         const filtroAutor = document.getElementById('filtroAutor');
+        const filtroTema = document.getElementById('filtroTema');
+        const filtroFecha = document.getElementById('filtroFecha');
+        const btnLimpiarFiltros = document.getElementById('btnLimpiarFiltros');
         const listaAutores = document.getElementById('listaAutores');
+
+        const totalOpinionesEl = document.getElementById('totalOpiniones');
+        const totalUsuariosEl = document.getElementById('totalUsuarios');
+        const totalMostradosEl = document.getElementById('totalMostrados');
 
         let todasLasIdeas = [];
 
@@ -507,17 +668,21 @@
             `;
         });
 
-        // 3. ACTUALIZAR EL SELECTOR DE FILTRO CON LOS AUTORES EXISTENTES
-        function actualizarOpcionesFiltro() {
-            const seleccionActual = filtroAutor.value;
+        // 3. ACTUALIZAR EL SELECTOR DE FILTRO CON LOS AUTORES EXISTENTES Y RESUMEN DE USUARIOS
+        function obtenerAutoresUnicos() {
             const autoresUnicos = new Set();
-
             todasLasIdeas.forEach(idea => {
                 const autorNormalizado = (idea.autor && idea.autor.trim()) ? idea.autor.trim() : "Sin autor";
                 autoresUnicos.add(autorNormalizado);
             });
+            return autoresUnicos;
+        }
 
-            // Reconstruir <select> de filtro
+        function actualizarOpcionesFiltro() {
+            const seleccionActual = filtroAutor.value;
+            const autoresUnicos = obtenerAutoresUnicos();
+
+            // Reconstruir <select> de filtro por integrante
             filtroAutor.innerHTML = '<option value="TODOS">Todos los integrantes</option>';
             // Reconstruir sugerencias del input autor
             listaAutores.innerHTML = '<option value="Cristhian">';
@@ -541,26 +706,92 @@
             }
         }
 
-        // Evento al cambiar el filtro
+        // Convierte fechas formateadas en español ("18 nov 2026, 23:50") o ISO a YYYY-MM-DD para comparar con <input type="date">
+        function extraerFechaYYYYMMDD(idea) {
+            if (idea.creadoEn && typeof idea.creadoEn.toDate === 'function') {
+                const d = idea.creadoEn.toDate();
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            }
+
+            if (idea.fecha) {
+                const texto = String(idea.fecha).toLowerCase();
+                const meses = {
+                    ene: '01', enero: '01',
+                    feb: '02', febrero: '02',
+                    mar: '03', marzo: '03',
+                    abr: '04', abril: '04',
+                    may: '05', mayo: '05',
+                    jun: '06', junio: '06',
+                    jul: '07', julio: '07',
+                    ago: '08', agosto: '08',
+                    sep: '09', sept: '09', set: '09', septiembre: '09',
+                    oct: '10', octubre: '10',
+                    nov: '11', noviembre: '11',
+                    dic: '12', diciembre: '12'
+                };
+                const match = texto.match(/(\d{1,2})\s+([a-zñ]+)\s+(\d{4})/i);
+                if (match) {
+                    const dia = String(match[1]).padStart(2, '0');
+                    const mes = meses[match[2]];
+                    const anio = match[3];
+                    if (mes) return `${anio}-${mes}-${dia}`;
+                }
+            }
+            return '';
+        }
+
+        function actualizarResumen(cantidadMostrada) {
+            const autoresUnicos = obtenerAutoresUnicos();
+            totalOpinionesEl.textContent = todasLasIdeas.length;
+            totalUsuariosEl.textContent = autoresUnicos.size;
+            totalMostradosEl.textContent = cantidadMostrada;
+        }
+
+        // Eventos al cambiar cualquiera de los filtros
         filtroAutor.addEventListener('change', renderizarIdeas);
+        filtroTema.addEventListener('change', renderizarIdeas);
+        filtroFecha.addEventListener('change', renderizarIdeas);
+
+        btnLimpiarFiltros.addEventListener('click', () => {
+            filtroAutor.value = 'TODOS';
+            filtroTema.value = 'TODOS';
+            filtroFecha.value = '';
+            renderizarIdeas();
+        });
 
         // 4. RENDERIZAR TARJETAS FILTRADAS
         function renderizarIdeas() {
-            const filtro = filtroAutor.value;
+            const autorSeleccionado = filtroAutor.value;
+            const temaSeleccionado = filtroTema.value;
+            const fechaSeleccionada = filtroFecha.value;
+
             contenedorIdeas.innerHTML = '';
 
             const ideasFiltradas = todasLasIdeas.filter(idea => {
-                if (filtro === "TODOS") return true;
                 const autorIdea = (idea.autor && idea.autor.trim()) ? idea.autor.trim() : "Sin autor";
-                return autorIdea === filtro;
+                const cumpleAutor = (autorSeleccionado === "TODOS") || (autorIdea === autorSeleccionado);
+
+                const textoIdea = `${idea.nombre || ''} ${idea.objetivo || ''}`.toLowerCase();
+                const cumpleTema = (temaSeleccionado === "TODOS") || textoIdea.includes(temaSeleccionado.toLowerCase());
+
+                const fechaIdeaISO = extraerFechaYYYYMMDD(idea);
+                const cumpleFecha = !fechaSeleccionada || (fechaIdeaISO === fechaSeleccionada);
+
+                return cumpleAutor && cumpleTema && cumpleFecha;
             });
 
+            actualizarResumen(ideasFiltradas.length);
+
             if (ideasFiltradas.length === 0) {
+                const hayFiltrosActivos = autorSeleccionado !== "TODOS" || temaSeleccionado !== "TODOS" || Boolean(fechaSeleccionada);
                 contenedorIdeas.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-box-open"></i>
                         <h4>No hay ideas para mostrar</h4>
-                        <p>${filtro === "TODOS" ? "Aún no hay conceptos de IA guardados. ¡Deposita el primero!" : "No se encontraron ideas registradas por " + escaparHTML(filtro) + "."}</p>
+                        <p>${!hayFiltrosActivos ? "Aún no hay conceptos de IA guardados. ¡Deposita el primero!" : "No se encontraron ideas que coincidan con los filtros seleccionados."}</p>
                     </div>
                 `;
                 return;
