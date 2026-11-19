@@ -11,8 +11,8 @@
     
     <style>
         :root {
-            --primary-color: #0f2041; /* Azul oscuro corporativo */
-            --secondary-color: #d4af37; /* Dorado/Amarillo IA */
+            --primary-color: #0f2041;
+            --secondary-color: #d4af37;
             --bg-color: #f4f7f9;
             --card-bg: #ffffff;
             --text-main: #2d3748;
@@ -34,7 +34,6 @@
             line-height: 1.6;
         }
 
-        /* Encabezado Principal */
         header {
             background-color: var(--primary-color);
             color: white;
@@ -71,7 +70,6 @@
             border: 3px solid #f6e05e;
         }
 
-        /* Contenedor Principal (Grid) */
         .main-container {
             max-width: 1200px;
             margin: 2rem auto;
@@ -81,7 +79,6 @@
             gap: 2rem;
         }
 
-        /* Panel del Formulario */
         .form-panel {
             background: var(--card-bg);
             padding: 2rem;
@@ -159,7 +156,6 @@
             transform: none;
         }
 
-        /* Panel de Ideas */
         .ideas-panel h3 {
             color: var(--primary-color);
             margin-bottom: 1.5rem;
@@ -257,7 +253,6 @@
             margin-bottom: 1rem;
         }
 
-        /* Notificaciones (Toast) */
         #toast-container {
             position: fixed;
             bottom: 20px;
@@ -311,7 +306,6 @@
 
     <div class="main-container">
         
-        <!-- Panel Izquierdo: Formulario -->
         <div class="form-panel">
             <h3><i class="fas fa-piggy-bank"></i> Deposita una idea</h3>
             <form id="formularioIdeas">
@@ -329,7 +323,6 @@
             </form>
         </div>
 
-        <!-- Panel Derecho: Lista de Ideas -->
         <div class="ideas-panel">
             <h3><i class="fas fa-lightbulb" style="color: var(--secondary-color);"></i> Documentación Recopilada</h3>
             <div id="contenedorIdeas" class="ideas-grid">
@@ -345,7 +338,6 @@
 
     <div id="toast-container"></div>
 
-    <!-- Script con módulos de Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
         import { 
@@ -360,7 +352,6 @@
             serverTimestamp 
         } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-        // Configuración de Firebase para alcancia-digital-ia
         const firebaseConfig = {
             apiKey: "AIzaSyB1apfhR0pSM7ZHjcW1Grd8HkHlsGloAAs",
             authDomain: "alcancia-digital-ia.firebaseapp.com",
@@ -368,9 +359,8 @@
             storageBucket: "alcancia-digital-ia.firebasestorage.app",
             messagingSenderId: "910317802267",
             appId: "1:910317802267:web:4d97a74c08c958461fb9be"
-        };[cite: 9]
+        };
 
-        // Inicializar Firebase y Firestore
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const coleccionIdeas = collection(db, "alcancia_ia");
@@ -379,7 +369,6 @@
         const contenedorIdeas = document.getElementById('contenedorIdeas');
         const btnGuardar = document.getElementById('btnGuardar');
 
-        // 1. GUARDAR IDEA EN CLOUD FIRESTORE
         formulario.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -412,7 +401,6 @@
             }
         });
 
-        // 2. ESCUCHAR CAMBIOS EN TIEMPO REAL (onSnapshot)
         const consultaOrdenada = query(coleccionIdeas, orderBy("creadoEn", "desc"));
 
         onSnapshot(consultaOrdenada, (snapshot) => {
@@ -462,7 +450,6 @@
             `;
         });
 
-        // 3. ELIMINAR IDEA DE CLOUD FIRESTORE
         async function eliminarIdea(id) {
             if (confirm('¿Estás seguro de eliminar este concepto de la base de datos?')) {
                 try {
@@ -475,14 +462,12 @@
             }
         }
 
-        // Prevenir inyección de HTML en textos ingresados
         function escaparHTML(texto) {
             const div = document.createElement('div');
             div.textContent = texto;
             return div.innerHTML;
         }
 
-        // Sistema de notificaciones (Toasts)
         function mostrarNotificacion(mensaje, tipo) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
