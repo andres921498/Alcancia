@@ -465,14 +465,14 @@
             <form id="formularioIdeas">
                 <div class="form-group">
                     <label for="autorIdea">Autor / Integrante <span style="color:red">*</span></label>
-                    <input type="text" id="autorIdea" list="listaAutores" placeholder="Ej. Nombre del autor" required autocomplete="off">
+                    <input type="text" id="autorIdea" list="listaAutores" placeholder="Ej. Cristhian o nombre de tu compañero" required autocomplete="off">
                     <datalist id="listaAutores">
                         <option value="Cristhian">
                     </datalist>
                 </div>
                 <div class="form-group">
                     <label for="nombreIdea">Idea: nombre de la idea <span style="color:red">*</span></label>
-                    <input type="text" id="nombreIdea" placeholder="Ej. Tema del cual daras la idea" required autocomplete="off">
+                    <input type="text" id="nombreIdea" placeholder="Ej. Algoritmo A* (Búsqueda Informada)" required autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label for="objetivoIdea">Objetivo / Descripción <span style="color:red">*</span></label>
@@ -706,18 +706,10 @@
             }
         }
 
-        // Convierte fechas formateadas en español ("18 nov 2026, 23:50") o ISO a YYYY-MM-DD para comparar con <input type="date">
+        // Prioriza el campo visible "fecha" y acepta meses con o sin punto o formato numérico
         function extraerFechaYYYYMMDD(idea) {
-            if (idea.creadoEn && typeof idea.creadoEn.toDate === 'function') {
-                const d = idea.creadoEn.toDate();
-                const y = d.getFullYear();
-                const m = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                return `${y}-${m}-${day}`;
-            }
-
             if (idea.fecha) {
-                const texto = String(idea.fecha).toLowerCase();
+                const texto = String(idea.fecha).toLowerCase().replace(/\./g, '');
                 const meses = {
                     ene: '01', enero: '01',
                     feb: '02', febrero: '02',
@@ -732,14 +724,35 @@
                     nov: '11', noviembre: '11',
                     dic: '12', diciembre: '12'
                 };
-                const match = texto.match(/(\d{1,2})\s+([a-zñ]+)\s+(\d{4})/i);
-                if (match) {
-                    const dia = String(match[1]).padStart(2, '0');
-                    const mes = meses[match[2]];
-                    const anio = match[3];
+
+                // Formato "13 nov 2026, 18:30"
+                const matchTexto = texto.match(/(\d{1,2})\s+([a-zñ]+)\s+(\d{4})/i);
+                if (matchTexto) {
+                    const dia = String(matchTexto[1]).padStart(2, '0');
+                    const mes = meses[matchTexto[2]];
+                    const anio = matchTexto[3];
                     if (mes) return `${anio}-${mes}-${dia}`;
                 }
+
+                // Formato numérico "13/11/2026" o "13-11-2026"
+                const matchNum = texto.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+                if (matchNum) {
+                    const dia = String(matchNum[1]).padStart(2, '0');
+                    const mes = String(matchNum[2]).padStart(2, '0');
+                    const anio = matchNum[3];
+                    return `${anio}-${mes}-${dia}`;
+                }
             }
+
+            // Respaldo con creadoEn si el documento no tiene campo fecha
+            if (idea.creadoEn && typeof idea.creadoEn.toDate === 'function') {
+                const d = idea.creadoEn.toDate();
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            }
+
             return '';
         }
 
