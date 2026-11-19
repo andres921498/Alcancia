@@ -109,7 +109,7 @@
             font-size: 0.95rem;
         }
 
-        input, textarea {
+        input, textarea, select {
             width: 100%;
             padding: 12px 15px;
             border: 1px solid #e2e8f0;
@@ -120,7 +120,7 @@
             background-color: #f8fafc;
         }
 
-        input:focus, textarea:focus {
+        input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: var(--primary-color);
             background-color: #fff;
@@ -156,10 +156,44 @@
             transform: none;
         }
 
-        .ideas-panel h3 {
-            color: var(--primary-color);
+        /* Cabecera del panel de ideas + Filtro */
+        .ideas-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
             margin-bottom: 1.5rem;
+        }
+
+        .ideas-header-bar h3 {
+            color: var(--primary-color);
             font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .filter-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--card-bg);
+            padding: 6px 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .filter-box label {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .filter-box select {
+            padding: 6px 10px;
+            font-size: 0.9rem;
+            min-width: 160px;
+            cursor: pointer;
         }
 
         .ideas-grid {
@@ -189,7 +223,7 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
         }
 
         .idea-title {
@@ -206,6 +240,20 @@
             padding: 3px 8px;
             border-radius: 12px;
             white-space: nowrap;
+        }
+
+        .idea-author {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            background: rgba(212, 175, 55, 0.18);
+            padding: 3px 10px;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            width: fit-content;
         }
 
         .idea-content {
@@ -310,12 +358,24 @@
             <h3><i class="fas fa-piggy-bank"></i> Deposita una idea</h3>
             <form id="formularioIdeas">
                 <div class="form-group">
+                    <label for="autorIdea">Autor / Integrante <span style="color:red">*</span></label>
+                    <input type="text" id="autorIdea" list="listaAutores" placeholder="Ej. Cristhian o nombre de tu compañero" required autocomplete="off">
+                    <datalist id="listaAutores">
+                        <option value="Cristhian">
+                    </datalist>
+                </div>
+                <div class="form-group">
                     <label for="nombreIdea">Idea: nombre de la idea <span style="color:red">*</span></label>
                     <input type="text" id="nombreIdea" placeholder="Ej. Algoritmo A* (Búsqueda Informada)" required autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label for="objetivoIdea">Objetivo / Descripción <span style="color:red">*</span></label>
                     <textarea id="objetivoIdea" rows="4" placeholder="Describe el concepto, su función y cómo se aplica..." required></textarea>
+                </div>
+                <!-- Campo temporal de fecha manual -->
+                <div class="form-group">
+                    <label for="fechaIdea">Fecha del comentario (temporal)</label>
+                    <input type="datetime-local" id="fechaIdea">
                 </div>
                 <button type="submit" class="btn-submit" id="btnGuardar">
                     <i class="fas fa-coins"></i> Guardar en Alcancía
@@ -324,7 +384,16 @@
         </div>
 
         <div class="ideas-panel">
-            <h3><i class="fas fa-lightbulb" style="color: var(--secondary-color);"></i> Documentación Recopilada</h3>
+            <div class="ideas-header-bar">
+                <h3><i class="fas fa-lightbulb" style="color: var(--secondary-color);"></i> Documentación Recopilada</h3>
+                <div class="filter-box">
+                    <label for="filtroAutor"><i class="fas fa-filter"></i> Filtrar por:</label>
+                    <select id="filtroAutor">
+                        <option value="TODOS">Todos los integrantes</option>
+                    </select>
+                </div>
+            </div>
+
             <div id="contenedorIdeas" class="ideas-grid">
                 <div class="empty-state">
                     <i class="fas fa-spinner fa-spin"></i>
@@ -368,29 +437,41 @@
         const formulario = document.getElementById('formularioIdeas');
         const contenedorIdeas = document.getElementById('contenedorIdeas');
         const btnGuardar = document.getElementById('btnGuardar');
+        const filtroAutor = document.getElementById('filtroAutor');
+        const listaAutores = document.getElementById('listaAutores');
 
+        let todasLasIdeas = [];
+
+        // 1. GUARDAR IDEA EN CLOUD FIRESTORE
         formulario.addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            const autor = document.getElementById('autorIdea').value.trim();
             const nombre = document.getElementById('nombreIdea').value.trim();
             const objetivo = document.getElementById('objetivoIdea').value.trim();
-            
-            const fechaActual = new Date();
+            const valorFechaManual = document.getElementById('fechaIdea').value;
+
+            const fechaSeleccionada = valorFechaManual ? new Date(valorFechaManual) : new Date();
             const opcionesFecha = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-            const fechaFormateada = fechaActual.toLocaleDateString('es-ES', opcionesFecha);
+            const fechaFormateada = fechaSeleccionada.toLocaleDateString('es-ES', opcionesFecha);
 
             btnGuardar.disabled = true;
             btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
             try {
                 await addDoc(coleccionIdeas, {
+                    autor: autor,
                     nombre: nombre,
                     objetivo: objetivo,
                     fecha: fechaFormateada,
                     creadoEn: serverTimestamp()
                 });
 
-                formulario.reset();
+                // Mantener el nombre del autor escrito para no tener que escribirlo cada vez
+                document.getElementById('nombreIdea').value = '';
+                document.getElementById('objetivoIdea').value = '';
+                document.getElementById('fechaIdea').value = '';
+
                 mostrarNotificacion('¡Idea depositada en la nube con éxito!', 'success');
             } catch (error) {
                 console.error("Error al guardar en Firestore:", error);
@@ -401,44 +482,20 @@
             }
         });
 
+        // 2. ESCUCHAR CAMBIOS EN TIEMPO REAL
         const consultaOrdenada = query(coleccionIdeas, orderBy("creadoEn", "desc"));
 
         onSnapshot(consultaOrdenada, (snapshot) => {
-            contenedorIdeas.innerHTML = '';
-
-            if (snapshot.empty) {
-                contenedorIdeas.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-box-open"></i>
-                        <h4>Tu alcancía está vacía</h4>
-                        <p>Aún no hay conceptos de IA guardados. ¡Deposita el primero!</p>
-                    </div>
-                `;
-                return;
-            }
-
+            todasLasIdeas = [];
             snapshot.forEach((documento) => {
-                const idea = documento.data();
-                const idDocumento = documento.id;
-
-                const tarjeta = document.createElement('div');
-                tarjeta.className = 'idea-card';
-                tarjeta.innerHTML = `
-                    <div class="idea-header">
-                        <h4 class="idea-title">${escaparHTML(idea.nombre)}</h4>
-                        <span class="idea-date"><i class="far fa-clock"></i> ${escaparHTML(idea.fecha || '')}</span>
-                    </div>
-                    <div class="idea-content">${escaparHTML(idea.objetivo)}</div>
-                    <button class="btn-delete" data-id="${idDocumento}">
-                        <i class="fas fa-trash-alt"></i> Eliminar
-                    </button>
-                `;
-                contenedorIdeas.appendChild(tarjeta);
+                todasLasIdeas.push({
+                    id: documento.id,
+                    ...documento.data()
+                });
             });
 
-            document.querySelectorAll('.btn-delete').forEach(boton => {
-                boton.addEventListener('click', () => eliminarIdea(boton.getAttribute('data-id')));
-            });
+            actualizarOpcionesFiltro();
+            renderizarIdeas();
         }, (error) => {
             console.error("Error al leer Firestore:", error);
             contenedorIdeas.innerHTML = `
@@ -450,6 +507,89 @@
             `;
         });
 
+        // 3. ACTUALIZAR EL SELECTOR DE FILTRO CON LOS AUTORES EXISTENTES
+        function actualizarOpcionesFiltro() {
+            const seleccionActual = filtroAutor.value;
+            const autoresUnicos = new Set();
+
+            todasLasIdeas.forEach(idea => {
+                const autorNormalizado = (idea.autor && idea.autor.trim()) ? idea.autor.trim() : "Sin autor";
+                autoresUnicos.add(autorNormalizado);
+            });
+
+            // Reconstruir <select> de filtro
+            filtroAutor.innerHTML = '<option value="TODOS">Todos los integrantes</option>';
+            // Reconstruir sugerencias del input autor
+            listaAutores.innerHTML = '<option value="Cristhian">';
+
+            autoresUnicos.forEach(autor => {
+                const opcion = document.createElement('option');
+                opcion.value = autor;
+                opcion.textContent = autor;
+                filtroAutor.appendChild(opcion);
+
+                if (autor !== "Sin autor" && autor !== "Cristhian") {
+                    const sug = document.createElement('option');
+                    sug.value = autor;
+                    listaAutores.appendChild(sug);
+                }
+            });
+
+            // Restaurar selección si sigue existiendo
+            if ([...autoresUnicos, "TODOS"].includes(seleccionActual)) {
+                filtroAutor.value = seleccionActual;
+            }
+        }
+
+        // Evento al cambiar el filtro
+        filtroAutor.addEventListener('change', renderizarIdeas);
+
+        // 4. RENDERIZAR TARJETAS FILTRADAS
+        function renderizarIdeas() {
+            const filtro = filtroAutor.value;
+            contenedorIdeas.innerHTML = '';
+
+            const ideasFiltradas = todasLasIdeas.filter(idea => {
+                if (filtro === "TODOS") return true;
+                const autorIdea = (idea.autor && idea.autor.trim()) ? idea.autor.trim() : "Sin autor";
+                return autorIdea === filtro;
+            });
+
+            if (ideasFiltradas.length === 0) {
+                contenedorIdeas.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-box-open"></i>
+                        <h4>No hay ideas para mostrar</h4>
+                        <p>${filtro === "TODOS" ? "Aún no hay conceptos de IA guardados. ¡Deposita el primero!" : "No se encontraron ideas registradas por " + escaparHTML(filtro) + "."}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            ideasFiltradas.forEach((idea) => {
+                const autorMostrar = (idea.autor && idea.autor.trim()) ? idea.autor.trim() : "Sin autor";
+                const tarjeta = document.createElement('div');
+                tarjeta.className = 'idea-card';
+                tarjeta.innerHTML = `
+                    <div class="idea-header">
+                        <h4 class="idea-title">${escaparHTML(idea.nombre)}</h4>
+                        <span class="idea-date"><i class="far fa-clock"></i> ${escaparHTML(idea.fecha || '')}</span>
+                    </div>
+                    <div class="idea-author"><i class="fas fa-user"></i> ${escaparHTML(autorMostrar)}</div>
+                    <div class="idea-content">${escaparHTML(idea.objetivo)}</div>
+                    <button class="btn-delete" data-id="${idea.id}">
+                        <i class="fas fa-trash-alt"></i> Eliminar
+                    </button>
+                `;
+                contenedorIdeas.appendChild(tarjeta);
+            });
+
+            document.querySelectorAll('.btn-delete').forEach(boton => {
+                boton.addEventListener('click', () => eliminarIdea(boton.getAttribute('data-id')));
+            });
+        }
+
+        // 5. ELIMINAR IDEA DE CLOUD FIRESTORE
         async function eliminarIdea(id) {
             if (confirm('¿Estás seguro de eliminar este concepto de la base de datos?')) {
                 try {
