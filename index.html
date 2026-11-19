@@ -682,9 +682,7 @@
             const seleccionActual = filtroAutor.value;
             const autoresUnicos = obtenerAutoresUnicos();
 
-            // Reconstruir <select> de filtro por integrante
             filtroAutor.innerHTML = '<option value="TODOS">Todos los integrantes</option>';
-            // Reconstruir sugerencias del input autor
             listaAutores.innerHTML = '<option value="Cristhian">';
 
             autoresUnicos.forEach(autor => {
@@ -700,38 +698,51 @@
                 }
             });
 
-            // Restaurar selección si sigue existiendo
             if ([...autoresUnicos, "TODOS"].includes(seleccionActual)) {
                 filtroAutor.value = seleccionActual;
             }
         }
 
-        // Prioriza el campo visible "fecha" y acepta meses con o sin punto o formato numérico
+        // Normaliza cualquier fecha guardada (texto en español, ISO, DD/MM/YYYY o Timestamp) a YYYY-MM-DD local
         function extraerFechaYYYYMMDD(idea) {
             if (idea.fecha) {
-                const texto = String(idea.fecha).toLowerCase().replace(/\./g, '');
+                const texto = String(idea.fecha)
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/\./g, '')
+                    .replace(/,/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
                 const meses = {
-                    ene: '01', enero: '01',
+                    ene: '01', enero: '01', jan: '01',
                     feb: '02', febrero: '02',
                     mar: '03', marzo: '03',
-                    abr: '04', abril: '04',
+                    abr: '04', abril: '04', apr: '04',
                     may: '05', mayo: '05',
                     jun: '06', junio: '06',
                     jul: '07', julio: '07',
-                    ago: '08', agosto: '08',
+                    ago: '08', agosto: '08', aug: '08',
                     sep: '09', sept: '09', set: '09', septiembre: '09',
                     oct: '10', octubre: '10',
                     nov: '11', noviembre: '11',
-                    dic: '12', diciembre: '12'
+                    dic: '12', diciembre: '12', dec: '12'
                 };
 
-                // Formato "13 nov 2026, 18:30"
-                const matchTexto = texto.match(/(\d{1,2})\s+([a-zñ]+)\s+(\d{4})/i);
+                // Formato "13 nov 2026 23:50" o "13 de noviembre de 2026"
+                const matchTexto = texto.match(/(\d{1,2})\s+(?:de\s+)?([a-z]+)\s+(?:de\s+)?(\d{4})/);
                 if (matchTexto) {
                     const dia = String(matchTexto[1]).padStart(2, '0');
                     const mes = meses[matchTexto[2]];
                     const anio = matchTexto[3];
                     if (mes) return `${anio}-${mes}-${dia}`;
+                }
+
+                // Formato ISO "2026-11-13..."
+                const matchISO = texto.match(/(\d{4})-(\d{2})-(\d{2})/);
+                if (matchISO) {
+                    return `${matchISO[1]}-${matchISO[2]}-${matchISO[3]}`;
                 }
 
                 // Formato numérico "13/11/2026" o "13-11-2026"
@@ -744,7 +755,7 @@
                 }
             }
 
-            // Respaldo con creadoEn si el documento no tiene campo fecha
+            // Respaldo con creadoEn si el documento no tiene fecha o no pudo parsearse
             if (idea.creadoEn && typeof idea.creadoEn.toDate === 'function') {
                 const d = idea.creadoEn.toDate();
                 const y = d.getFullYear();
@@ -767,6 +778,7 @@
         filtroAutor.addEventListener('change', renderizarIdeas);
         filtroTema.addEventListener('change', renderizarIdeas);
         filtroFecha.addEventListener('change', renderizarIdeas);
+        filtroFecha.addEventListener('input', renderizarIdeas);
 
         btnLimpiarFiltros.addEventListener('click', () => {
             filtroAutor.value = 'TODOS';
@@ -779,7 +791,7 @@
         function renderizarIdeas() {
             const autorSeleccionado = filtroAutor.value;
             const temaSeleccionado = filtroTema.value;
-            const fechaSeleccionada = filtroFecha.value;
+            const fechaSeleccionada = filtroFecha.value; // YYYY-MM-DD
 
             contenedorIdeas.innerHTML = '';
 
