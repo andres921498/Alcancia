@@ -153,6 +153,12 @@
             box-shadow: 0 4px 12px rgba(15, 32, 65, 0.2);
         }
 
+        button.btn-submit:disabled {
+            background-color: #718096;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         /* Panel de Ideas */
         .ideas-panel h3 {
             color: var(--primary-color);
@@ -274,7 +280,6 @@
 
         .toast.error { border-left-color: var(--danger); }
 
-        /* Animaciones */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -285,7 +290,6 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .main-container {
                 grid-template-columns: 1fr;
@@ -319,7 +323,7 @@
                     <label for="objetivoIdea">Objetivo / Descripción <span style="color:red">*</span></label>
                     <textarea id="objetivoIdea" rows="4" placeholder="Describe el concepto, su función y cómo se aplica..." required></textarea>
                 </div>
-                <button type="submit" class="btn-submit">
+                <button type="submit" class="btn-submit" id="btnGuardar">
                     <i class="fas fa-coins"></i> Guardar en Alcancía
                 </button>
             </form>
@@ -329,64 +333,92 @@
         <div class="ideas-panel">
             <h3><i class="fas fa-lightbulb" style="color: var(--secondary-color);"></i> Documentación Recopilada</h3>
             <div id="contenedorIdeas" class="ideas-grid">
-                <!-- Las ideas se inyectan aquí con JS -->
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <h4>Conectando con la nube...</h4>
+                    <p>Cargando ideas desde Cloud Firestore</p>
+                </div>
             </div>
         </div>
 
     </div>
 
-    <!-- Contenedor para notificaciones -->
     <div id="toast-container"></div>
 
-    <script>
+    <!-- Script con módulos de Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            onSnapshot, 
+            deleteDoc, 
+            doc, 
+            query, 
+            orderBy,
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+        // Configuración de Firebase para alcancia-digital-ia
+        const firebaseConfig = {
+            apiKey: "AIzaSyB1apfhR0pSM7ZHjcW1Grd8HkHlsGloAAs",
+            authDomain: "alcancia-digital-ia.firebaseapp.com",
+            projectId: "alcancia-digital-ia",
+            storageBucket: "alcancia-digital-ia.firebasestorage.app",
+            messagingSenderId: "910317802267",
+            appId: "1:910317802267:web:4d97a74c08c958461fb9be"
+        };[cite: 9]
+
+        // Inicializar Firebase y Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const coleccionIdeas = collection(db, "alcancia_ia");
+
         const formulario = document.getElementById('formularioIdeas');
         const contenedorIdeas = document.getElementById('contenedorIdeas');
+        const btnGuardar = document.getElementById('btnGuardar');
 
-        // Inicializar
-        document.addEventListener('DOMContentLoaded', cargarIdeas);
-
-        // Evento Submit
-        formulario.addEventListener('submit', function(e) {
+        // 1. GUARDAR IDEA EN CLOUD FIRESTORE
+        formulario.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const nombre = document.getElementById('nombreIdea').value.trim();
             const objetivo = document.getElementById('objetivoIdea').value.trim();
             
-            // Obtener fecha y hora actual
             const fechaActual = new Date();
             const opcionesFecha = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
             const fechaFormateada = fechaActual.toLocaleDateString('es-ES', opcionesFecha);
 
-            const nuevaIdea = {
-                id: Date.now(),
-                nombre: nombre,
-                objetivo: objetivo,
-                fecha: fechaFormateada
-            };
+            btnGuardar.disabled = true;
+            btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
-            const ideas = obtenerIdeas();
-            // Agregar al inicio del array para que salga primero
-            ideas.unshift(nuevaIdea); 
-            
-            localStorage.setItem('alcancia_ia', JSON.stringify(ideas));
-            
-            formulario.reset();
-            cargarIdeas();
-            mostrarNotificacion('¡Idea depositada con éxito!', 'success');
+            try {
+                await addDoc(coleccionIdeas, {
+                    nombre: nombre,
+                    objetivo: objetivo,
+                    fecha: fechaFormateada,
+                    creadoEn: serverTimestamp()
+                });
+
+                formulario.reset();
+                mostrarNotificacion('¡Idea depositada en la nube con éxito!', 'success');
+            } catch (error) {
+                console.error("Error al guardar en Firestore:", error);
+                mostrarNotificacion('Error al guardar. Revisa tu conexión o las reglas de Firebase.', 'error');
+            } finally {
+                btnGuardar.disabled = false;
+                btnGuardar.innerHTML = '<i class="fas fa-coins"></i> Guardar en Alcancía';
+            }
         });
 
-        // Obtener de localStorage
-        function obtenerIdeas() {
-            const ideasGuardadas = localStorage.getItem('alcancia_ia');
-            return ideasGuardadas ? JSON.parse(ideasGuardadas) : [];
-        }
+        // 2. ESCUCHAR CAMBIOS EN TIEMPO REAL (onSnapshot)
+        const consultaOrdenada = query(coleccionIdeas, orderBy("creadoEn", "desc"));
 
-        // Renderizar el HTML
-        function cargarIdeas() {
-            const ideas = obtenerIdeas();
-            contenedorIdeas.innerHTML = ''; 
-            
-            if(ideas.length === 0) {
+        onSnapshot(consultaOrdenada, (snapshot) => {
+            contenedorIdeas.innerHTML = '';
+
+            if (snapshot.empty) {
                 contenedorIdeas.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-box-open"></i>
@@ -397,33 +429,57 @@
                 return;
             }
 
-            ideas.forEach(idea => {
+            snapshot.forEach((documento) => {
+                const idea = documento.data();
+                const idDocumento = documento.id;
+
                 const tarjeta = document.createElement('div');
                 tarjeta.className = 'idea-card';
                 tarjeta.innerHTML = `
                     <div class="idea-header">
-                        <h4 class="idea-title">${idea.nombre}</h4>
-                        <span class="idea-date"><i class="far fa-clock"></i> ${idea.fecha}</span>
+                        <h4 class="idea-title">${escaparHTML(idea.nombre)}</h4>
+                        <span class="idea-date"><i class="far fa-clock"></i> ${escaparHTML(idea.fecha || '')}</span>
                     </div>
-                    <div class="idea-content">${idea.objetivo}</div>
-                    <button class="btn-delete" onclick="eliminarIdea(${idea.id})">
+                    <div class="idea-content">${escaparHTML(idea.objetivo)}</div>
+                    <button class="btn-delete" data-id="${idDocumento}">
                         <i class="fas fa-trash-alt"></i> Eliminar
                     </button>
                 `;
                 contenedorIdeas.appendChild(tarjeta);
             });
+
+            document.querySelectorAll('.btn-delete').forEach(boton => {
+                boton.addEventListener('click', () => eliminarIdea(boton.getAttribute('data-id')));
+            });
+        }, (error) => {
+            console.error("Error al leer Firestore:", error);
+            contenedorIdeas.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle" style="color: var(--danger);"></i>
+                    <h4>Error de conexión con Firestore</h4>
+                    <p>Verifica la configuración y las reglas de seguridad de tu base de datos en Firebase.</p>
+                </div>
+            `;
+        });
+
+        // 3. ELIMINAR IDEA DE CLOUD FIRESTORE
+        async function eliminarIdea(id) {
+            if (confirm('¿Estás seguro de eliminar este concepto de la base de datos?')) {
+                try {
+                    await deleteDoc(doc(db, "alcancia_ia", id));
+                    mostrarNotificacion('Idea eliminada de la nube.', 'error');
+                } catch (error) {
+                    console.error("Error al eliminar:", error);
+                    mostrarNotificacion('No se pudo eliminar la idea.', 'error');
+                }
+            }
         }
 
-        // Eliminar idea
-        function eliminarIdea(id) {
-            // Confirmación nativa moderna
-            if(confirm('¿Estás seguro de eliminar este concepto de tu documentación?')) {
-                let ideas = obtenerIdeas();
-                ideas = ideas.filter(idea => idea.id !== id);
-                localStorage.setItem('alcancia_ia', JSON.stringify(ideas));
-                cargarIdeas();
-                mostrarNotificacion('Idea eliminada de la alcancía.', 'error');
-            }
+        // Prevenir inyección de HTML en textos ingresados
+        function escaparHTML(texto) {
+            const div = document.createElement('div');
+            div.textContent = texto;
+            return div.innerHTML;
         }
 
         // Sistema de notificaciones (Toasts)
@@ -436,10 +492,8 @@
                                              : '<i class="fas fa-info-circle" style="color: var(--danger)"></i>';
             
             toast.innerHTML = `${icono} <span>${mensaje}</span>`;
-            
             container.appendChild(toast);
 
-            // Eliminar el toast después de 3 segundos
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transform = 'translateX(100%)';
